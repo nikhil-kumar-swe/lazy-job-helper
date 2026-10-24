@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'gemma' => [
+    'key'   => env('GEMMA_API_KEY'),
+    'url'   => env('GEMMA_API_URL'),
+    'model' => env('GEMMA_MODEL'),
+    ],
+
 ];
