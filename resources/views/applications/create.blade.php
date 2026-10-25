@@ -13,7 +13,8 @@
                     <p class="mb-4 text-red-600">{{ $message }}</p>
                 @enderror
 
-                <form method="POST" action="{{ route('applications.store') }}" class="space-y-5">
+                <form method="POST" action="{{ route('applications.store') }}" class="space-y-5"
+      onsubmit="const b=document.getElementById('go'); b.disabled=true; b.textContent='Generating... (up to 1 minute)';">
                     @csrf
 
                     <div>
@@ -40,7 +41,7 @@
                         Your text is sent to Google's Gemma API, and on the free tier Google may use it to improve its models. Leave out phone numbers, home address and ID numbers.
                     </p>
 
-                    <x-primary-button>Generate</x-primary-button>
+                    <x-primary-button id="go">Generate</x-primary-button>
                 </form>
             </div>
         </div>

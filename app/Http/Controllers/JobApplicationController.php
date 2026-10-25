@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class JobApplicationController extends Controller
 {
+    public function index(Request $request)
+    {
+        $applications = $request->user()->jobApplications()->latest()->paginate(10);
+
+        return view('applications.index', compact('applications'));
+    }
+
     public function create()
     {
         return view('applications.create');
@@ -21,11 +28,7 @@ class JobApplicationController extends Controller
         ]);
 
         try {
-            $result = $client->analyze(
-                $data['resume_text'],
-                $data['job_description'],
-                $data['job_title']
-            );
+            $result = $client->analyze($data['resume_text'], $data['job_description'], $data['job_title']);
         } catch (\Throwable $e) {
             report($e);
             return back()->withInput()->withErrors([
@@ -33,9 +36,22 @@ class JobApplicationController extends Controller
             ]);
         }
 
-        $request->user()->jobApplications()->create($data + $result);
+        $application = $request->user()->jobApplications()->create($data + $result);
 
-        return redirect()->route('applications.create')
-            ->with('status', 'Saved! (The result page comes tomorrow.)');
+        return redirect()->route('applications.show', $application->id);
+    }
+
+    public function show(Request $request, string $id)
+    {
+        $application = $request->user()->jobApplications()->findOrFail($id);
+
+        return view('applications.show', compact('application'));
+    }
+
+    public function destroy(Request $request, string $id)
+    {
+        $request->user()->jobApplications()->findOrFail($id)->delete();
+
+        return redirect()->route('applications.index')->with('status', 'Deleted.');
     }
 }

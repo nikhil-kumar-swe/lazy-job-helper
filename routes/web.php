@@ -17,11 +17,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/applications/create', [JobApplicationController::class, 'create'])
-        ->name('applications.create');
-    Route::post('/applications', [JobApplicationController::class, 'store'])
-        ->middleware('throttle:5,1')
-        ->name('applications.store');
+        Route::prefix('applications')->name('applications.')->group(function () {
+        Route::get('/', [JobApplicationController::class, 'index'])->name('index');
+        Route::get('/create', [JobApplicationController::class, 'create'])->name('create');
+        Route::post('/', [JobApplicationController::class, 'store'])
+            ->middleware('throttle:5,1')->name('store');
+        Route::get('/{id}', [JobApplicationController::class, 'show'])
+            ->whereNumber('id')->name('show');
+        Route::delete('/{id}', [JobApplicationController::class, 'destroy'])
+            ->whereNumber('id')->name('destroy');
+    });
 });
 
 require __DIR__.'/auth.php';
