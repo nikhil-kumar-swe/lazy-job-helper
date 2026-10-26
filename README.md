@@ -1,58 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Lazy Job-Application Helper
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Paste your resume and a job description. Gemma gives you a tailored cover letter, the keywords your resume is missing, a few resume bullet rewrites, and five likely interview questions. Everything is saved to a private history page.
 
-## About Laravel
+Built for the **DEV Hacktoberfest Open-Source AI Challenge: Week 3 ("Slow and Steady")**. The theme is open-weight AI that does a dreaded task for you, and writing job applications is mine.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Repo: https://github.com/nikhil-kumar-swe/lazy-job-helper
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## What it does
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Sign up and log in (Laravel Breeze).
+2. Paste your resume as plain text and paste the job description.
+3. A hosted Gemma model returns:
+   - a tailored cover letter
+   - missing keywords (things the job asks for that your resume does not show)
+   - 3 to 5 rewritten resume bullets
+   - 5 interview questions
+4. Results are saved. You can view or delete them from the History page.
 
-## Learning Laravel
+**Suggestions only.** It does not generate a full resume, and it does not apply to jobs for you. Check every line against your real experience before using it.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### The honesty rule
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+The prompt tells the model to use only facts found in the resume and never to invent skills, tools, employers or numbers. I tested this with sample resumes and compared the output against the source text. Early prompts added filler words and small claims, so I tightened the prompt in several rounds. The final version keeps numbers exactly as written and rewords bullets without adding new facts. The tradeoff: the rewrites stay fairly close to your original wording.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Model and open-source AI
 
-## Agentic Development
+- Model: **Gemma** (`gemma-4-31b-it`), an open-weight model from Google.
+- Served through the Gemini API on Google AI Studio (free tier).
+- All model calls live in one class, `app/Services/ModelClient.php`. The API key, URL and model name come from `.env`:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+GEMMA_API_KEY=
+GEMMA_API_URL=https://generativelanguage.googleapis.com/v1beta/models
+GEMMA_MODEL=gemma-4-31b-it
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Switching to another Gemma model on the same API only needs a `.env` change. Switching to a different provider means editing only `ModelClient.php`, because the request and response format would change.
 
-## Contributing
+## Privacy (please read)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+This is **not** a private or offline app.
 
-## Code of Conduct
+- Resume and job text are sent to Google's hosted API.
+- On Google's free tier, Google may use prompts and responses to improve its products.
+- Do not paste phone numbers, home addresses or ID numbers. The form shows this warning.
+- There is no automatic redaction in this version.
+- Because Gemma is open-weight, it could be run locally (for example with Ollama) to keep text on your own machine. I did not build or test that.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Other protections that are in place:
+- Each user can only open and delete their own applications (other users get a 404).
+- Submissions are rate limited to 5 per minute.
+- Resume text is not written to the logs, and API keys are never committed (`.env` is git-ignored).
 
-## Security Vulnerabilities
+## Tech stack
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Laravel with Breeze, Blade and Tailwind CSS
+- SQLite for local development
+- Gemma via the Gemini API
 
-## License
+## Run it yourself
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+You need PHP, Composer, Node.js and npm.
+
+```
+git clone https://github.com/nikhil-kumar-swe/lazy-job-helper.git
+cd lazy-job-helper
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Open `.env` and set `GEMMA_API_KEY` (get a key at aistudio.google.com). Then:
+
+```
+php artisan migrate
+npm install
+npm run build
+php artisan serve
+```
+
+Open http://127.0.0.1:8000, register, and click **New Application**.
+
+If `GEMMA_MODEL` returns a "not found" error, list the models your key can use:
+
+```
+curl "https://generativelanguage.googleapis.com/v1beta/models" -H "x-goog-api-key: YOUR_KEY"
+```
+
+## Known limits
+
+- A request can take up to about 2 minutes on the free tier. The button shows "Generating..." while you wait.
+- Free-tier quotas can change, and the API sometimes returns temporary errors. The app retries a few times and then shows a friendly error message.
+- Each text field is limited to 6000 characters.
+- The bullet suggestions are rewrites of lines already in your resume, not new content.
+- If the model returns invalid JSON, the app retries once. That path is built but only lightly tested.
+- There is no live deployment. The demo is a screen recording.
+- Not built: full resume generation, PDF export, file uploads, user profiles.
+
+## Challenge notes
+
+- The repository was started and finished during the challenge window (Oct 19 to Oct 25, 2026).
+- Commits after the deadline: none
+- AI tools were used to help plan the build and debug it.
+- Prize category entered: Best Use of Gemma.
